@@ -1,8 +1,7 @@
 #subfunctions 
-### 
-SIGN CONVENTION: POSITIVE (FORWARD OR DOWNHILL) ; NEGATIVE (BACKWARD OR UPHILL)
+###  SIGN CONVENTION: POSITIVE (FORWARD OR DOWNHILL) ; NEGATIVE (BACKWARD OR UPHILL)
 
-These subfunctions have been imported from phase 1 to include the new subfunctions
+#These subfunctions have been imported from phase 1 to include the new subfunctions
 ###
 import numpy as np
 from scipy.special import erf
@@ -175,7 +174,7 @@ Everything below this line is new for phase 2 of the project
 def motorW(v, rover):
     # finds rotational speed of the motor shaft in rad/s
     if type(rover) != dict:
-        raise Exception('motorW input must be a dictonary')
+        raise Exception('motorW input "rover" must be a dictionary')
         
     if not isinstance(v, (int, float, np.ndarray)):
         raise Exception('motorW velocity must be a scalar or numpy array')
