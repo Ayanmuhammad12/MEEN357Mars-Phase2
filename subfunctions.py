@@ -167,9 +167,9 @@ def F_net(omega, terrain_angle, rover, planet, Crr):
     return Fnet
 
 
-  """
-  Everything below this line is new for phase 2 of the project
-  """
+"""
+Everything below this line is new for phase 2 of the project
+"""
 
 
 def motorW(v, rover):
