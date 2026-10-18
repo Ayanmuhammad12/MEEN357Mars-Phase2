@@ -5,6 +5,7 @@
 ###
 import numpy as np
 from scipy.special import erf
+from scipy.interpolate import interp1d
 
 def get_mass(rover):
     #Computes total mass of rover
@@ -191,3 +192,50 @@ def motorW(v, rover):
     w = (v /r) * Ng
     
     return w
+
+def rover_dynamics(t, y, rover, planet, experiment):
+    if not isinstance(t, (int, float)):
+        raise Exception('rover_dynamics - Input time, t, should be a scalar')
+    if not isinstance(y, np.ndarray) or y.shape!= (2,):
+        raise Exception('rover_dynamics - Input state vector, y, should be a 1D array containing velocity and position')
+    if type(rover) != dict:
+        raise Exception('rover_dynamics - Input rover must be a dict')
+    if type(planet) != dict:
+            raise Exception('rover_dynamics - Input planet must be a dict')
+    if type(experiment) != dict:
+                raise Exception('rover_dynamics - Input experiment must be a dict')
+    # def our state vector
+    v = float(y[0])
+    x = float(y[1])
+
+    #interpolation function for terrain_angle
+    alpha_fun = interp1d(experiment['alpha_dist'], experiment['alpha_deg'], kind = 'cubic', fill_value = 'extrapolate')
+    terrain_angle = float(alpha_fun(x))
+
+    #set up equation
+    omega = motorW(v,rover)
+    Fnet = F_net(omega, terrain_angle, rover, planet, experiment['Crr'])
+
+    m = get_mass(rover)
+    a = Fnet/m
+    dydt = np.array([a,v])
+
+    return dydt
+
+
+
+def mechpower(v,rover):
+    if not isinstance(v, (int, np.ndarray, float )):
+        raise Exception('mechpower - Input v must be a scalar or a numpy array if vector')
+    if isinstance(v, np.ndarray) and v.dim != 1:
+        raise Exception('mechpower - Input v must be a scalar or a 1D numpy array, not a matrix')
+    if type(rover) != dict:
+        raise Exception('mechpower - Input rover must be a dict')
+
+    # P = tau * angular velo
+    motor = rover['wheel_assembly']['motor']
+    w = motorW(v,rover)
+    tau = tau_dcmotor(w,motor)
+    P = tau * w
+
+    return P
