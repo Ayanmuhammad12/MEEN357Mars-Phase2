@@ -211,6 +211,7 @@ def end_of_mission_event(end_event):
 
 
 def motorW(v, rover):
+    '''returns motor shaft angular speed given translational velocity'''
     # finds rotational speed of the motor shaft in rad/s
     if type(rover) != dict:
         raise Exception('motorW input "rover" must be a dictionary')
@@ -232,6 +233,7 @@ def motorW(v, rover):
     return w
 
 def rover_dynamics(t, y, rover, planet, experiment):
+    '''Creates RHS for ODE based off F_net, y = [velocity,positon] and returns [accelration,velocity]'''
     #ODE right hand side for rover motion
     if not isinstance(t, (int, float)):
         raise Exception('rover_dynamics - Input time, t, should be a scalar')
@@ -264,6 +266,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
 
 
 def mechpower(v,rover):
+    '''Function returns the mechanical power output from a single motor at given velocity'''
     #Instantaneous mechanical power output for single motor
     if not isinstance(v, (int, np.ndarray, float )):
         raise Exception('mechpower - Input v must be a scalar or a numpy array if vector')
@@ -333,6 +336,7 @@ def battenergy(t, v, rover):
     return E
 
 def simulate_rover(rover, planet, experiment, end_event):
+    '''Simulates rover trajectory using solve_ivp and adds telemetry data to rover dict'''
     #sim rover trajectory with solve_ivp
     from scipy.integrate import solve_ivp
 
