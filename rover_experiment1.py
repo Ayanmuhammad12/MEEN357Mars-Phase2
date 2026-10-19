@@ -2,8 +2,9 @@ from define_experiment import experiment1
 import numpy as np
 from subfunctions import simulate_rover
 import matplotlib.pyplot as plt
+#this script plots rover velocity, position, and power of motor, as well as updates rover's telemetry
 
-# ---- Rover + planet dicts (standalone-runnable) ----
+# Rover + planet dicts
 motor = {
     'torque_stall':  170,
     'torque_noload':   0,
