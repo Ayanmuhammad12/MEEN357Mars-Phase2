@@ -232,6 +232,7 @@ def motorW(v, rover):
     return w
 
 def rover_dynamics(t, y, rover, planet, experiment):
+    #ODE right hand side for rover motion
     if not isinstance(t, (int, float)):
         raise Exception('rover_dynamics - Input time, t, should be a scalar')
     if not isinstance(y, np.ndarray) or y.shape!= (2,):
@@ -263,6 +264,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
 
 
 def mechpower(v,rover):
+    #Instantaneous mechanical power output for single motor
     if not isinstance(v, (int, np.ndarray, float )):
         raise Exception('mechpower - Input v must be a scalar or a numpy array if vector')
     if isinstance(v, np.ndarray) and v.ndim != 1:
@@ -331,6 +333,7 @@ def battenergy(t, v, rover):
     return E
 
 def simulate_rover(rover, planet, experiment, end_event):
+    #sim rover trajectory with solve_ivp
     from scipy.integrate import solve_ivp
 
     if not isinstance(rover, dict):
