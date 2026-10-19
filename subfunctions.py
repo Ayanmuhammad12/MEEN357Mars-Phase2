@@ -227,7 +227,7 @@ def rover_dynamics(t, y, rover, planet, experiment):
 def mechpower(v,rover):
     if not isinstance(v, (int, np.ndarray, float )):
         raise Exception('mechpower - Input v must be a scalar or a numpy array if vector')
-    if isinstance(v, np.ndarray) and v.dim != 1:
+    if isinstance(v, np.ndarray) and v.ndim != 1:
         raise Exception('mechpower - Input v must be a scalar or a 1D numpy array, not a matrix')
     if type(rover) != dict:
         raise Exception('mechpower - Input rover must be a dict')
@@ -239,3 +239,55 @@ def mechpower(v,rover):
     P = tau * w
 
     return P
+
+def battenery(t, v, rover):
+    """
+    Computes the total electrical energy consumed from the rover battery pack
+    over a simulation profile defined by time-velocity pairs, accounting for all 
+    6 motors and for DC motor inefficiency.
+    
+    """
+
+
+#input validation
+
+    if not isinstance(t, np.ndarray) or t.ndim !=1:
+        raise Exception('battenergy - Input t must be a 1D numpy array')
+    if not isinstance(v, np.ndarray) or v.ndim !=1:
+        raise Exception('battenergy-Input v must be a 1D numpy array')
+    if len(t) !=len(v):
+        raise Exception ('battenergy- t and v must be the same length')
+    if type(rover)!=dict:
+        raise Exception('battenergy - Input rover must be a dict')
+    
+
+    motor = rover['wheel_assembly']['motor']
+    # omega is the motor speed, tau is the motor torque at each time sample [W]
+    omega = motorW(v, rover)
+    tau = tau_dcmotor(omega,motor)
+    #mechanical power output of a single motor at each time sample [W]
+    P_motor = mechpower(v,rover)
+    #interpolation function for motor efficiency
+    effcy_tau = motor['effcy_tau']
+    effcy = motor['effcy']
+    effcy_fun = interp1d(effcy_tau, effcy, kind = 'cubic')
+    #clip torque into range of efficiency data before interpolating
+    #because 170Nm is greater than 165Nm which is max bounds at zero rover velocity
+    tau_clipped = np.clip(tau,np.min(effcy_tau),np.max(effcy_tau))
+
+    #motor efficiency at each operating point [-]
+    eta = effcy_fun(tau_clipped)
+    #Samples set to nonzero to avoid dividing by zero
+
+    P_batt_single = np.zeros(len(v), dtype=float)
+    nonzero = eta >0
+    P_batt_single[nonzero]=P_motor[nonzero] / eta[nonzero]
+
+#   Multiply by number of wheels (6)
+    P_batt_total = 6*P_batt_single
+
+    # integrate battery power to get the total energy in joules
+    E = np.trapezoid(P_batt_total, t)
+           
+
+    return E
