@@ -6,6 +6,8 @@
 import numpy as np
 from scipy.special import erf
 from scipy.interpolate import interp1d
+from scipy.integrate import trapezoid
+
 
 def get_mass(rover):
     #Computes total mass of rover
@@ -240,7 +242,7 @@ def mechpower(v,rover):
 
     return P
 
-def battenery(t, v, rover):
+def battenergy(t, v, rover):
     """
     Computes the total electrical energy consumed from the rover battery pack
     over a simulation profile defined by time-velocity pairs, accounting for all 
@@ -287,7 +289,64 @@ def battenery(t, v, rover):
     P_batt_total = 6*P_batt_single
 
     # integrate battery power to get the total energy in joules
-    E = np.trapezoid(P_batt_total, t)
+    E = trapezoid(P_batt_total, t)
            
 
     return E
+
+def simulate_rover(rover, planet, experiment, end_event):
+    from scipy.integrate import solve_ivp
+
+    if not isinstance(rover, dict):
+        raise Exception('simulate_rover - Input rover must be a dictionary')
+    if not isinstance(planet, dict):
+        raise Exception('simulate_rover - Input planet must be a dictionary')
+    if not isinstance(experiment, dict):
+        raise Exception('simulate_rover - Input experiment must be a dictionary')
+    if not isinstance(end_event, dict):
+        raise Exception('simulate_rover - Input end_event must be a dictionary')
+
+    t_span = experiment['time_range']
+    y0 = experiment['initial_conditions']
+    events = end_of_mission_event(end_event)
+
+    sol = solve_ivp(fun=lambda t,y: rover_dynamics(t,y,rover,planet,experiment),
+                    t_span = t_span,y0=y0,
+                    method = 'RK45',
+                    events=events,
+                    dense_output=False
+    )
+    T = sol.t
+    V = sol.y[0, :]
+    X = sol.y[1, :]
+
+    completion_time = T[-1]
+    distance_traveled = X[-1]-X[0]
+    max_velocity = np.max(V)
+    if completion_time > 0:
+        average_velocity = distance_traveled/completion_time
+    else:
+        average_velocity = 0.0
+
+    power = mechpower(V,rover)
+    battery_energy = battenergy(T,V,rover)
+
+    if distance_traveled > 0:
+        energy_per_distance = battery_energy/distance_traveled
+    else:
+        energy_per_distance = 0.0
+
+    rover['telemetry'] = {
+        'Time':T,
+        'completion_time': completion_time,
+        'velocity': V,
+        'position': X,
+        'distance_traveled': distance_traveled,
+        'max_velocity': max_velocity,
+        'average_velocity': average_velocity,
+        'power': power,
+        'battery_energy':battery_energy,
+        'energy_per_distance' : energy_per_distance
+    }
+
+    return rover
